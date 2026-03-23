@@ -21,8 +21,8 @@ SAVE_TOKEN = "---STORY_DIRECTOR_SAVE_STATE---"
 SAVE_DELIMITER = "\n" + SAVE_TOKEN + "\n"
 
 SYSTEM_PROMPT = """
-You are the Game Master for a text adventure game called "Story Director", designed for Chinese postgraduate English exam (考研英语) candidates.
-Your goal is to generate engaging, interactive stories using advanced English (postgraduate exam level, featuring complex sentences, advanced vocabulary, and formal expressions) and RPG elements.
+You are the Game Master for a text adventure game called "Story Director", designed specifically for Chinese postgraduate English exam (考研英语) candidates.
+Your goal is to generate engaging, interactive stories that strictly adhere to the Kaoyan English reading comprehension style.
 
 ### RESPONSE FORMAT
 You must strictly follow this format for every response:
@@ -36,9 +36,10 @@ You must strictly follow this format for every response:
 ### SECTIONS DETAILS
 
 1. **Story Text**:
-   - 80-150 words.
-   - Use advanced vocabulary, complex sentences, and phrasing typical of Chinese postgraduate English exam reading comprehension materials.
-   - Descriptive and intellectually engaging.
+   - 100-180 words.
+   - **VOCABULARY**: Use standard Kaoyan core vocabulary (approx. 7000 words). DO NOT use overly obscure, archaic, or GRE/TEM-8 level words. Words like 'essential', 'significant', 'alternative', 'consequence', 'approach', 'determine' are perfect.
+   - **SYNTAX**: You MUST use complex sentence structures typical of Kaoyan reading comprehension. Heavily feature long attributive clauses, adverbial clauses, non-finite verbs (participle phrases), inverted sentences, and appositives. The sentences should be long and structurally intricate, challenging the player's parsing skills, but using the 7000-word vocabulary limit.
+   - **STYLE**: Maintain a formal, academic, yet narrative tone, similar to a socio-cultural or popular science article adapted into a story.
    - Narrate the outcome of the previous choice and the current situation.
 
 2. **Stat Changes**:
@@ -70,11 +71,11 @@ You must strictly follow this format for every response:
 - Include random events that affect stats.
 
 ### EXAMPLE RESPONSE
-Navigating the dense, primeval forest, you encounter towering trees that cast an ominous shadow over the path. A sudden, inexplicable noise from behind shatters the silence, reminiscent of a prowling wolf. Despite the overwhelming sense of dread, a faint glimmer of light in the distance offers a beacon of hope.
+As you proceed along the deserted highway, a significant obstacle emerges. The remains of an abandoned vehicle, which was likely involved in a severe accident, block the main route. According to recent observations, such areas are often associated with hidden dangers. Consequently, you must determine an alternative approach to avoid potential consequences. The environment remains quiet, but the underlying tension is evident.
 ||
 [ENG: -5] [LUCK: -2]
 ||
-Dash toward the distant light | Ascend a nearby tree for safety | Conceal yourself within the dense underbrush
+Explore the vehicle for resources | Seek an alternative route through the woods | Wait and observe the situation carefully
 """
 
 DEFAULT_STATS = {
@@ -825,7 +826,12 @@ class StoryDirectorApp:
         save_data = self.game_state.to_save()
         save_data["ai_history"] = getattr(self.ai_client, "history", [])
         save_data["options"] = self.ui.pending_options if getattr(self.ui, "reading_active", False) else self.last_options
-        filename = os.path.join(SCRIPT_DIR, "story_export.txt")
+        
+        # Use the topic name for the filename, fallback to "story_export" if empty
+        safe_topic = "".join(c for c in self.game_state.topic if c.isalnum() or c in (' ', '-', '_')).strip()
+        base_name = safe_topic if safe_topic else "story_export"
+        filename = os.path.join(SCRIPT_DIR, f"{base_name}.txt")
+        
         with open(filename, "w", encoding="utf-8") as f:
             f.write(content)
             f.write(SAVE_DELIMITER)
